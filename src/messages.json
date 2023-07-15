@@ -1,0 +1,115 @@
+{
+    "wrongResponse":[
+        "_Por favor escribe un número válido_"
+    ],
+    "notInterested":[
+        "Gracias por habernos contactado, esperamos nos busques pronto"
+    ],
+    "intro" : [
+        "👋 Saludos! 👋\nEstás comunicado con *Diego López*, _agente de reclutamiento de latinoamerica_ para *SmartWork* Polonia🇵🇱",
+        "🙏 Antes que nada te pido disculpas si no he contestado rapidamente a tus mensajes, muchas personas están interesadas en las vacantes, por lo que ha sido dificil darles una respuesta inmediata a todos",
+        "Para poder brindar una buena atención he habilitado temporalmente este 💬 chat bot🤖.\nPodrás hablar directamente con migo si estás realmente interesado, después de que el *chat bot* te presente la información",
+        "👉_Quienes ya tienen procesos corriendo con nosotros, estan esperando documentos, o vienen en camino, por favor escribir 6, para darles prioridad_👈",
+        "➡️ *Escribe 1* para obtener información de la *vacante de soldador*\n\n➡️ *Escribe 2* para obtener información de la *vacante de obrero en fabrica de Anticorrosivo*\n\n➡️ *Escribe 3* para obtener información de la *vacante de obrero en fábrica de Metales*\n\n➡️ *Escribe 4* para obtener información de la *vacante de empacador en fábrica de ropa para cama*\n\n➡️ *Escribe 5* si tienes una _agencia de empleo en latinoamerica_ y quieres convertirte en uno de nuestros *partners*\n\n➡️ *Escribe 6* si trabajas en nuestra empresa y necesitas asistencia."
+    ],
+
+    "welderWorker":[
+        "Soldador con experiencia",
+        "📍*Lugar*\nPlanta que se dedica al diseño y producción de contenedores metálicos para transporte y almacenamiento de autopartes y piezas ( Jaguar, Mercedes, Porsce)",
+        "💰*Pago*\nLa hora basico se paga a *21,35zł neto*\nPero si cumples entre el 90% y el 95% del objetivo diario la hora se paga a *23,26zł*.\nY si cumples entre el 95% y el 100% del objetivo diario la hora se paga a *26,17zł*\nBonificación por ser constante (o sea no faltar a trabajar) *2zł más* por hora\nSi hablas polaco *2zł más* por hora",
+        "🤓*Aquellos soldadores que demuestren un alto nivel de experiencia y conocimiento tendrán mejores posiciones y un salario aún mejor. Debes pasar una prueba*",
+        "🏠*Alojamiento*La empresa cubre alojamiento (3-4 personas por habitación) por 100 zlotys mensual que debe pagar el empleado para cubrir servicios básicos.",
+        "🔎*Responsabilidades*\n- Orden en el lugar de trabajo.",
+        "📆*Jornada laboral*\nTurnos rotativos\nJornadas de 10 a 12 horas de lunes a sábado\nRequisito trabajar al menos 260 horas en el mes",
+        "👨‍🔧*Dotación*\nLa empresa proporciona calzado y ropa",
+        "🍗*Alimentación*\nLa empresa proporciona dos comidas gratis al día",
+        "✅*Requisitos*\n- Experiencia en Soldadura MIG-MAG\n- Hombres, hasta 45 años de edad\n- Pasar el test ",
+        "🎥*Video*\nhttps://youtu.be/2lO2exWfoWM",
+        "➡️ *Escribe 1* si te interesa la oferta\n\n⬅️ *Escribe 2* para volver para ver otras ofertas"
+    ],
+
+    "strumetGeneralWorker":[
+        "Obrero industrial en planta metalica",
+        "📍*Lugar*\nPlanta que se dedica al diseño y producción de contenedores metálicos para transporte y almacenamiento de autopartes y piezas ( Jaguar, Mercedes, Porsce)",
+        "💰*Pago*\n➡️ Un *pulidor* que complete entre el 90% al 95% del objetivo diario ganará *20zł* por hora. Si completa más del 95% ganará *21zł* por hora\n➡️ Un *montador* que complete más del 100% ganará *20zł* por hora.➡️ Un *operador de robot soldador* que complete más del 100% ganará *20zł* por hora. \n\n🎉Recibirá una bonificación de *+2zł* por hora cuando no falte ningún día al trabajo",
+        "🏠*Alojamiento*La empresa cubre alojamiento (3-4 personas por habitación) por 100 zlotys mensual que debe pagar el empleado para cubrir servicios básicos.",
+        "🔎*Responsabilidades*\n- Montaje de contenedores metálicos \n- Empaque de producto final\n- Colgar y quitar piezas de 'travers'\n- Preparación de piezas antes de soldar",
+        "📆*Jornada laboral*\nTurnos rotativos\nJornadas de 10 a 12 horas de lunes a sábado\nRequisito trabajar al menos 260 horas en el mes",
+        "👨‍🔧*Dotación*\nLa empresa proporciona calzado y ropa",
+        "🍗*Alimentación*\nLa empresa proporciona dos comidas gratis al día",
+        "✅*Requisitos*\nManejo de herramiento eléctrica: taladro, bulgaro, atornillador, llaves fijas.",
+        "🎥*Video*\nhttps://youtu.be/a8J0evZx7lo",
+        "➡️ *Escribe 1* si te interesa la oferta\n\n⬅️ *Escribe 2* para volver para ver otras ofertas"
+    ],
+
+
+    "FAMGeneralWorker":[
+        "Obrero industrial planta anticorrosivo",
+        "📍*Lugar*\nPlanta que se dedica a tratamiento de anticorrosivo de metal",
+        "💰*Pago*\n➡️ Basico hora: *19zl hora*\nDespués de 1 mes *20zl hora*\nDesde tercer mes *21zl hora*",
+        "🏠*Alojamiento*La empresa cubre alojamiento (3-4 personas por habitación) por 275 zlotys mensual que debe pagar el empleado para cubrir servicios básicos.",
+        "🔎*Responsabilidades*\n- Colgar y quitar piezas de 'travers'\n- Limpieza de las piezas\n- Orden en el lugar de trabajo",
+        "📆*Jornada laboral*\nTurnos rotativos\nJornadas de 10 a 12 horas de lunes a sábado\nRequisito trabajar al menos 260 horas en el mes",
+        "👨‍🔧*Dotación*\nLa empresa proporciona calzado y ropa",
+        "🍗*Alimentación*\nLa empresa proporciona una comida gratis durante el invierno",
+        "✅*Requisitos*\n-Hombres",
+        "🎥*Video*\nhttps://youtu.be/a8J0evZx7lo",
+        "➡️ *Escribe 1* si te interesa la oferta\n\n⬅️ *Escribe 2* para volver para ver otras ofertas"
+    ],
+
+
+
+    "euroConfortWorker":[
+        "Empacador en línea de producción",
+        "📍*Lugar*\nPlanta que se dedica a la confección de cubiertas para colchones, almohadas y ropa de cama para tiendas prestigiosas de Europa",
+        "💰*Pago*\n➡️ *18,24zl hora*",
+        "🏠*Alojamiento*\nLa empresa cubre alojamiento (3-4 personas por habitación) por 450 zlotys mensual que debe pagar el empleado para cubrir servicios básicos.",
+        "🔎*Responsabilidades*\n-Trabajo en linea de producción\n-Empaque de mantas y almohadas\n-Importante orden y limpieza",
+        "📆*Jornada laboral*\nTurnos rotativos\nJornadas de 10 a 12 horas de lunes a sábado\nDe 260 a 300 horas al mes",
+        "👨‍🔧*Dotación*\nLa empresa proporciona calzado y ropa",
+        "❗️Oferta sujeta a Disponibilidad",
+        "➡️ *Escribe 1* si te interesa la oferta\n\n⬅️ *Escribe 2* para volver para ver otras ofertas"
+    ],
+
+
+
+    "assistance":[
+        "El chat bot ha terminado, te contactaré lo más pronto posible.",
+        "Gracias por contactarme, por favor escribeme cual es tu consulta"
+    ],
+
+    "partner":[ 
+        "Hola estimado futuro socio, somos SmartWork.",
+        "Somos una multinacional con sede en 🇵🇱 Polonia 🇵🇱.\n Queremos proponerte un acuerdo 🤝, mediante el cual podrás ofrecer a tus candidatos vacantes de trabajo legal en nuestro país.\n A continuación te adjunto la propuesta en formato pdf. Déjame saber si tienes alguna duda al respecto. Estaremos atentos a tu respuesta.",
+        "Esta es una propuesta para agencias de empleo y afines para que amplien su catálogo de vacantes, y de esta manera puedan ofrecer trabajo legal en Polonia",
+        "El chat bot ha terminado, te contactaré lo más pronto posible."
+    ],
+
+    "askCurrentLocation":[
+        "¿Estás actualmente en Polonia?",
+        "➡️ *Escribe 1* si vives en Polonia\n\n⬅️ *Escribe 2* si vives en otro país"
+    ],
+
+    "startProcessInPoland":[
+        "Antes de comenzar a trabajar, lo primero que debemos hacer es *solicitar tu permiso de trabajo*. Este es un documento que expide el gobierno polaco por solicitud de SmartWork, suele demorar 1 mes ( o entre 3-5 semanas).",
+        "SmartWork ofrece 👉 *TRABAJO LEGAL* 👈, por eso siempre debemos tramitar este documento antes de que estés en nuestras oficinas",
+        "Para empezar este proceso debes pagar 100 zlotys si estás en Polonia",
+        "Debes llegar hasta la estación de tren de Swidnica miasto, nosotros te enviaremos un conductor para recogerte. Deberás informarnos anticipadamente la hora exacta de llegada.",
+        "Cuando tengamos tu permiso de trabajo y tu estés aquí en la empresa, empezaremos el proceso de contratación de inmediato, para que puedas empezar a trabajar cuanto antes.",
+        "➡️ *Escribe 1* si quieres hacer el proceso, yo te contactaré de inmediato\n\n⬅️ *Escribe 2* si quieres finalizar y esperar otras ofertas luego"
+    ],
+
+
+    "startProcessFromExterior":[
+        "Antes de comenzar a trabajar, lo primero que debemos hacer es *solicitar tu permiso de trabajo*. Este es un documento que expide el gobierno polaco por solicitud de SmartWork, suele demorar 1 mes aproximadamente ( 3 a 5 semanas).",
+        "SmartWork ofrece 👉*TRABAJO LEGAL*👈, por eso siempre debemos tramitar este documento antes de que estés en nuestras oficinas",
+        "Para empezar este proceso debes dejar un depósito de 100 USD dolares americanos.",
+        "Este depósito será *REEMBOLSADO* cuando cumplas tres meses de trabajo. Es importante aclarar que es una forma de asegurarnos de tus intenciones de venir a trabajar. Aclaramos que nuestro negocio no es vender documentos.",
+        "Si estas fuera del país debes venir como turista, si tu país te permite venir solo con tu pasaporte. Puedes mostrar el permiso de trabajo solamente en inmigración Polonia, en todos los demás escalas debes entrar como turista.",
+        "Debes llegar hasta la estación de tren de Swidnica miasto, nosotros te enviaremos un conductor para recogerte. Deberás informarnos anticipadamente la hora exacta de llegada.",
+        "Cuando tengamos tu permiso de trabajo y tu estés aquí en la empresa, empezaremos el proceso de contratación de inmediato, para que puedas empezar a trabajar cuanto antes.",
+        "Durante el proceso de contratación se te explicará con un intérprete en español, todos los documentos que vas a firmar, al igual que se resolverán todas las dudas que tengas, tendrás que ir al médico para un chequeo, y se te entregará la dotación que diga en la oferta",
+        "➡️ *Escribe 1* si quieres hacer el proceso, yo te contactaré de inmediato\n\n⬅️ *Escribe 2* si quieres finalizar y esperar otras ofertas luego"
+    ]
+}
+
