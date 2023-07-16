@@ -1,12 +1,26 @@
 {
-  "name": "chatbotwhatsapp",
-  "version": "1.0.0",
-  "description": "",
+  "name": "whatsappchatbot",
+  "version": "0.0.1",
+  "description": "whatsapp chatbot whitout using Whatsapp API provided by facebook",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/creativoloco/whatsappChatbot.git"
+  },
+  "keywords": [
+    "whatsapp",
+    "chatbot"
+  ],
+  "author": "Diego Lopez - @creativoloco",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/creativoloco/whatsappChatbot/issues"
+  },
+  "homepage": "https://github.com/creativoloco/whatsappChatbot#readme",
+  "dependencies": {
+    "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js"
+  }
 }
