@@ -1,290 +1,387 @@
 const fs = require('fs')
 const path = require('path')
-
-const { MessageMedia } = require('./whatsapp-web.js/index')
-
-const production = true
-const labelPrefix = "CHATBOT-"
-const testPhoneNumbers = [ "573158770727", "48731356633" ]
-
-const imgFolder    = path.join( __dirname, 'src', 'img' )
-const messagesFile = path.join( __dirname, 'src', 'messages.json')
-
-let chatBotMessages = []
-let chatBotLabels // labels chatbot will assign
-
-const partnersPresentation = MessageMedia.fromFilePath( path.join(imgFolder, 'smartWorkPartners.pdf'))
-
-const vacancyImages = {
-    fam_gw:      MessageMedia.fromFilePath(path.join(imgFolder,'anticorrosive.png')),
-    euroConfort: MessageMedia.fromFilePath(path.join(imgFolder,'packer.png')),
-    strumet_w:   MessageMedia.fromFilePath(path.join(imgFolder,'welder.png')),
-    strumet_gw:  MessageMedia.fromFilePath(path.join(imgFolder,'generalWorkerMetals.png'))
-}
+const { MessageMedia } = require('whatsapp-web.js')
 
 
-
-
-
-async function startChatBot ( client ){
-    chatBotLabels = await getChatBotLabels()
-    readMessagesFile( messagesFile )
-    watchMessagesFile( messagesFile )
-
-    // check all unread chats and send messages
-    const chats = await client.getChats()
-    await respondUnreadChats(chats)
-
-    // listen for new messages
-    client.on('message',async message => {
-        const chat = await message.getChat()
-        if( !chat.isGroup ){
-            await autoResponses(chat, message)
-        }
-    })
-}
-
-
-
-
-
-
-
-// messages functions
-
-async function respondUnreadChats( chats ){
-    let unreadChats = 0
-
-    for( let i = 0; i < chats.length; i++){
-        const chat = chats[i];
-        if( chat.unreadCount === 0 ) continue
-        if( chat.isGroup ) continue
-        await autoResponses(chat, chat.lastMessage )
-        ++unreadChats
+class ChatBot {
+    constructor( options={} ){
+        this.client
+        this.production       = options.production || false
+        this.labelPrefix      = options.labelPrefix || 'CHATBOT-'
+        this.testPhoneNumbers = options.testNumbers || [];
+        this.messagesFile     = options.messagesFile || "messages.json"
+        this.chatBotLabels
     }
-    console.log("UNREAD CHATS: " + unreadChats )
-}
 
-async function sendMultipleMessages( chat, messages ){
-    return Promise.allSettled( messages.map(
-        m => chat.sendMessage(m)
-    ))
-}
+    async labels(){
+        if(!this.client) throw new Error("labels() require a client")
+        let clientLabels = await this.client.getLabels()
+        let prefix = this.labelPrefix
+        console.log('Labels readed')
+        return labelName => clientLabels.find( lb => 
+                lb.name === (prefix+labelName)
+            )
+        
+    }
+
+    /**
+     * Read and watch messages file, also return a function to get message
+     * this is a closure function that wraps message file handling
+     * @returns {Function} - get messages function
+     */
+    async messages(){
+        const messagePath= path.join( __dirname, this.messagesFile)
+        let messages = []
+
+        /*
+         * Read messages json file and and parse to assign to gobal variable
+         * @param {string} messagesPath messages file path
+         * @return void
+         */
+        function readMessagesFile(){
+            return new Promise((res,rej)=>{
+                fs.readFile( messagePath, {encoding:'utf8'}, (error,msgs)=>{
+                    if(error){
+                        console.error(error)
+                        rej(error)
+                    }
+                    try{
+                        const messagesJSON = JSON.parse(msgs)
+                        messages = messagesJSON
+                        res(messages)
+                    }catch( errorJson ){
+                        // log error and continue execution without stopping
+                        console.error( errorJson )
+                        rej(error)
+                    }
+                })
+            })
+        }
 
 
-async function autoResponses( chat, message ){
-    const contact       = await chat.getContact()
-    const isTestable    = ( !production  &&  (await isTestContact(contact)) )
-    const goForward     = (production || isTestable)
+        /*
+         * Watch messages json file for changes, and parse it after
+         * @param {string} messagesPath messages file path
+         * @return {void}
+         */
+        async function watchMessagesFile(){
+            fs.watch( messagePath, ( eventType, filename )=>{
+                if(eventType === 'change'){
+                    console.log("FILE CHANGED" + filename)
+                    readMessagesFile()
+                }
+            })
+        }
 
-    if( !goForward ) return
-    const labels     = await chat.getLabels()
-    const contactNumber = await contact.getFormattedNumber();
-    console.log("MESSAGE FROM: %s NAMED: %s", contactNumber, contact.pushname)
+        // read and watch file 
+        let res = await readMessagesFile()
+        watchMessagesFile()
+        console.log("messages: " + typeof res)
+        return (key => messages[key])
+    }
 
-    if ( labels.some( l => l.id === chatBotLabels.assistance?.id )) return
-    if( !(message && message.body)) return
+    /**
+     * Stores each requested img
+     * @returns {MessageMedia}
+     */
+    fileCache(){
+        const messageMediaCache = []
+        return function(filename){
+            // search for file
+            for( let i = 0; i < messageMediaCache.length; i++){
+               if( filename === messageMediaCache[i].fileName ){
+                   return messageMediaCache[i].messageMedia
+               }
+            }
 
-    if( !labels.some( l => l.name.startsWith(labelPrefix)) ){
+            // create a new message media
+            const filePath = path.join(__dirname, 'img', filename)
+            const messageMediaItem = {
+                fileName: filename,
+                messageMedia: MessageMedia.fromFilePath(filePath)
+            }
+            messageMediaCache.push(messageMediaItem)
+            return messageMediaItem.messageMedia
+        }
+    }
+
+    async start( clientInstance ){
+        this.client = clientInstance
+        
+        // function to get Images from cache
+        this.getFile = this.fileCache()
+
+        // function to get messages
+        this.getMsgs = await this.messages()
+
+        // function to get labels (initialized when start method is called)
+        this.getLabel = await this.labels()
+
+    }
+
+    async respondNewMessages(){
+        // listen for new messages
+        this.client.on('message',async message => {
+            const chat = await message.getChat()
+            if( !chat.isGroup ){
+                await this.autoResponses(chat, message)
+            }
+        })
+    }
+
+    async respondUnreadChats(  ){
+
+        // check all unread chats and send messages
+        const chats = await this.client.getChats()
+        let unreadChats = 0
+
+        for( let i = 0; i < chats.length; i++){
+            const chat = chats[i];
+            if( chat.unreadCount === 0 ) continue
+            if( chat.isGroup ) continue
+            await this.autoResponses(chat, chat.lastMessage )
+            ++unreadChats
+        }
+        console.log("UNREAD CHATS: " + unreadChats )
+    }
+
+    async sendMsgs( chat, messages ){
+        for( const msg of messages)
+            await chat.sendMessage(msg)
+    }
+
+    async autoResponses( chat, message ){
+        // get info
+        const contact       = await chat.getContact()
+
+        // verify
+        const isTestContact = (await this.isTestContact(contact)) 
+        const isTestable    = ( !this.production  && isTestContact )
+        const goForward     = (this.production || isTestable)
+        if( !goForward ) return
+
+        //get more info
+        const chatLabels    = await chat.getLabels()
+        const contactNumber = await contact.getFormattedNumber();
+        const getLabel = this.getLabel
+
+
+        const labelPrx = this.labelPrefix
+        console.log("MESSAGE FROM: %s NAMED: %s", contactNumber, contact.pushname)
+
+        let messagesToSend = []
+        let labelsToAssign = []
+
+        // avoid assistance marked chats to be passed to chatbot
+        if ( chatLabels.some( l => l.id === getLabel('assistance').id)) return
+        
+        // bug error pupperet workaround 
+        if( !(message && message.body) ){
+            console.log('NO MESSAGE BODY')
+            return
+        }
+
+        // shortcut for delete message (only testNumbers)
+        if( isTestable && message.body === '!delete') {
+            console.log("CHAT DELETED: "+(await chat.delete()))
+            return
+        }
+        
+
         // step 1
-        await sendMultipleMessages(chat, chatBotMessages.intro  ) 
-        await chat.changeLabels( [chatBotLabels.intro.id] )
-    } else if ( labels.some( l => l.id === chatBotLabels.intro.id )){
+        // check if this chat has been processed by chatbot
+        if( !chatLabels.some( l => l.name.startsWith(labelPrx)) ){
+            messagesToSend.push(...this.getMsgs('intro'))
+            labelsToAssign.push( getLabel('intro').id )
+            
+            // actions
+            await this.sendMsgs( chat, messagesToSend )
+            await this.addLabel(chat, chatLabels, labelsToAssign)
+            return
+        }
+
         //step 2
-        // show offer information depending of response of first step
-        switch(message.body){
-            case '1':
-                await chat.sendMessage(vacancyImages.strumet_w)
-                await sendMultipleMessages(chat, chatBotMessages.welderWorker)
-                await addLabel(chat, labels, [chatBotLabels.welderWorker.id])
-                break
-            case '2':
-                await chat.sendMessage(vacancyImages.fam_gw)
-                await sendMultipleMessages(chat, chatBotMessages.FAMGeneralWorker)
-                await addLabel(chat, labels, [chatBotLabels.generalWorkerFAM.id])
-                break
-            case '3':
-                await chat.sendMessage(vacancyImages.strumet_gw)
-                await sendMultipleMessages(chat, chatBotMessages.strumetGeneralWorker)
-                await addLabel(chat, labels, [chatBotLabels.generalWorkerStrumet.id])
-                break
-            case '4':
-                await chat.sendMessage(vacancyImages.euroConfort)
-                await sendMultipleMessages(chat, chatBotMessages.euroConfortWorker)
-                await addLabel(chat, labels, [chatBotLabels.euroConfortWorker.id])
-                break
-            case '5':
-                await sendMultipleMessages(chat, chatBotMessages.partner)
-                await chat.sendMessage( partnersPresentation )
-                await addLabel(chat, labels, [chatBotLabels.partner.id])
-                break
-            case '6':
-                await sendMultipleMessages(chat, chatBotMessages.assistance)
-                await addLabel(chat, labels, [chatBotLabels.assistance.id])
-                break
-            default:
-                await sendMultipleMessages(chat, chatBotMessages.wrongResponse)
-                await chat.sendMessage(chatBotMessages.intro[chatBotMessages.intro.length-1])
+        // process chat labeled as "intro"
+        if( chatLabels.some( l => l.id === getLabel("intro").id )){
+            switch(message.body){
+                case '1':
+                    labelsToAssign.push( getLabel('welder').id )
+                    messagesToSend.push( this.getFile('welder.png') )
+                    messagesToSend.push(...this.getMsgs('welderWorker'))
+                    break
+                case '2':
+                    labelsToAssign.push( getLabel('generalWorkerFAM').id )
+                    messagesToSend.push( this.getFile('anticorrosive.png'))
+                    messagesToSend.push(...this.getMsgs('FAMGeneralWorker'))
+                    break
+                case '3':
+                    labelsToAssign.push( getLabel('generalWorkerStrumet').id)
+                    messagesToSend.push( this.getFile('generalWorkerMetals.png'))
+                    messagesToSend.push(...this.getMsgs('strumetGeneralWorker')) 
+                    break
+                case '4':
+                    labelsToAssign.push(getLabel('euroConfortWorker').id)
+                    messagesToSend.push(this.getFile('packer.png'))
+                    messagesToSend.push(...this.getMsgs('euroConfortWorker')) 
+                    break
+                case '5':
+                    labelsToAssign.push(getLabel('partner').id)
+                    messagesToSend.push(this.getFile('smartWorkPartners.pdf'))
+                    messagesToSend.push(...this.getMsgs('partner')) 
+                    break
+                case '6':
+                    labelsToAssign.push(getLabel('assistance').id)
+                    messagesToSend.push(this.getMsgs('assistance'))
+                    break
+                default:
+                    // send the last previous message whose contains options
+                    let prevMsgs = this.getMsgs('intro')
+                    labelsToAssign.push(...chatLabels.map(l=>l.id))
+                    messagesToSend.push(this.getMsgs('wrongResponse'))
+                    messagesToSend.push(prevMsgs[prevMsgs.length-1])
+            }
+
+            // actions
+            await this.sendMsgs( chat, messagesToSend )
+            await this.addLabel(chat, chatLabels, labelsToAssign)
+            return
         }
-    } else if ( labels.some( l => 
-        l.id === chatBotLabels.inPoland.id || l.id === chatBotLabels.fromExterior.id 
-    )){
-        // final step--> to get personalized assitance o refuse
-        // 1 - go to personalized assitance
+
+
+        // final step--> when location has been choosed
+        // 1 - go to personalized assistance
         // 2 - start again
-        let labelIDs  = labels.filter( l =>{
-            return l.name.startsWith(labelPrefix)
-        }).map(l=>l.id)
-        switch( message.body ){
-            case '1':
-                await sendMultipleMessages(chat, chatBotMessages.assistance)
-                await addLabel(chat, labels, [...labelIDs, chatBotLabels.assistance.id])
-                break
-            case '2':
-                await sendMultipleMessages(chat, chatBotMessages.notInterested)
-                //await addLabel(chat, labels, [...labelIDs, chatBotLabels.notInterested.id])
-                //await addLabel(chat, labels, labelIDs)
-                await addLabel(chat, labels, [])
-                break
-            default:
-                await sendMultipleMessages(chat, chatBotMessages.wrongResponse)
-                await chat.sendMessage(chatBotMessages.startProcessFromExterior[chatBotMessages.startProcessFromExterior.length-1])
+        if ( chatLabels.some( l => 
+            l.id === getLabel('inPoland').id ||
+            l.id === getLabel('fromExterior').id 
+        )){
+            let previousLabelsIDs  = chatLabels.filter( l =>{
+                return l.name.startsWith(labelPrx)
+            }).map(l=>l.id)
+            
+            switch( message.body ){
+                case '1':
+                    labelsToAssign.push( getLabel('assistance').id )
+                    labelsToAssign.push(... previousLabelsIDs )
+                    messagesToSend.push(...this.getMsgs('assistance'))
+                    break
+                case '2':
+                    messagesToSend.push(...this.getMsgs('notInterested'))
+                    break
+                default:
+                    let prevMsgs = this.getMsgs('startProcessFromExterior')
+                    messagesToSend.push(this.getMsgs('wrongResponse'))
+                    messagesToSend.push(prevMsgs[prevMsgs.length-1])
+                    labelsToAssign.push(...chatLabels.map(l=>l.id))
+            }
+            // actions
+            await this.sendMsgs( chat, messagesToSend )
+            await this.addLabel(chat, chatLabels, labelsToAssign)
+            return
         }
-    } else if ( labels.some( l => l.id === chatBotLabels.waitingLocation.id )){
+
+
         // step 4
         // give information to start process
         // 1 - in poland and set label in Poland
         // 2 - from exterior and set label people from exterior
-        // this option remove waiting location id
-
-
-        let labelIDs  = labels.filter( l =>{
-            return (l.name.startsWith(labelPrefix) && l.id != chatBotLabels.waitingLocation.id)
-        }).map(l=>l.id)
-
-
-        switch( message.body ){
-            case '1':
-                await sendMultipleMessages(chat, chatBotMessages.startProcessInPoland)
-                await addLabel(chat, labels, [...labelIDs, chatBotLabels.inPoland.id])
-                break
-            case '2':
-                await sendMultipleMessages(chat, chatBotMessages.startProcessFromExterior)
-                await addLabel(chat, labels, [...labelIDs, chatBotLabels.fromExterior.id])
-                break
-            default:
-                await sendMultipleMessages(chat, chatBotMessages.wrongResponse)
-                await chat.sendMessage(chatBotMessages.askCurrentLocation[chatBotMessages.askCurrentLocation.length-1])
+        // this option remove waiting location label
+        if ( chatLabels.some( l => l.id === getLabel('waitingLocation').id )){
+            // this array does not contain "waitingLocation" label
+            let previousLabelsIDs  = chatLabels.filter( l =>{
+                return (
+                    l.name.startsWith(labelPrx) &&
+                    l.id != getLabel('waitingLocation').id 
+                )}).map(l=>l.id)
+            switch( message.body ){
+                case '1':
+                    labelsToAssign.push( getLabel('inPoland').id )
+                    labelsToAssign.push(... previousLabelsIDs )
+                    messagesToSend.push(...this.getMsgs('startProcessInPoland'))
+                    break
+                case '2':
+                    labelsToAssign.push( getLabel('fromExterior').id )
+                    labelsToAssign.push(... previousLabelsIDs )
+                    messagesToSend.push(...this.getMsgs('startProcessFromExterior'))
+                    break
+                default:
+                    let prevMsgs = this.getMsgs('askCurrentLocation')
+                    messagesToSend.push(this.getMsgs('wrongResponse'))
+                    messagesToSend.push(prevMsgs[prevMsgs.length-1])
+                    labelsToAssign.push(...chatLabels.map(l=>l.id))
+            }
+            // actions
+            await this.sendMsgs( chat, messagesToSend )
+            await this.addLabel(chat, chatLabels, labelsToAssign)
+            return
         }
-    } else if ( labels.some( l => 
-        l.id === chatBotLabels.welderWorker.id ||
-        l.id === chatBotLabels.generalWorkerStrumet.id ||
-        l.id === chatBotLabels.generalWorkerFAM.id ||
-        l.id === chatBotLabels.euroConfortWorker.id
-    )){
+
+
         // step 3
-        // answer to show more offer information 
+        // ask to show more offer information 
         // YES - next time will ask location
         // NO  - next time will show vacancies info
-        let labelIDs  = labels.filter( l =>{
-            return l.name.startsWith(labelPrefix) 
-        }).map(l=>l.id)
+        if ( chatLabels.some( l => 
+            l.id === getLabel('welder').id ||
+            l.id === getLabel('generalWorkerStrumet').id ||
+            l.id === getLabel('generalWorkerFAM').id ||
+            l.id === getLabel('euroConfortWorker').id 
+        )){
+            let previousLabelsIDs  = chatLabels.filter( l =>{
+                return l.name.startsWith(labelPrx) 
+            }).map(l=>l.id)
 
-        switch( message.body ){
-            case '1':
-                await sendMultipleMessages(chat, chatBotMessages.askCurrentLocation)
-                await addLabel(chat, labels, [...labelIDs, chatBotLabels.waitingLocation.id])
-                break
-            case '2':
-                await sendMultipleMessages(chat, chatBotMessages.intro)
-                await addLabel(chat, labels, [chatBotLabels.intro.id])
-                break
-            default:
-                await sendMultipleMessages(chat, chatBotMessages.wrongResponse)
-                await chat.sendMessage(chatBotMessages.welderWorker[chatBotMessages.welderWorker.length-1])
+            switch( message.body ){
+                case '1':
+                    labelsToAssign.push( getLabel('waitingLocation').id )
+                    labelsToAssign.push(...previousLabelsIDs )
+                    messagesToSend.push(...this.getMsgs('askCurrentLocation'))
+                    break
+                case '2':
+                    labelsToAssign.push( getLabel('intro').id )
+                    messagesToSend.push(...this.getMsgs('intro'))
+                    break
+                default:
+                    let prevMsgs = this.getMsgs('welder')
+                    messagesToSend.push(this.getMsgs('wrongResponse'))
+                    messagesToSend.push(prevMsgs[prevMsgs.length-1])
+                    labelsToAssign.push(...chatLabels.map(l=>l.id))
+            }
+            // actions
+            await this.sendMsgs( chat, messagesToSend )
+            await this.addLabel(chat, chatLabels, labelsToAssign)
+            return
         }
+    }
+
+
+    // change only chatbot labels
+    async addLabel(chat, chatLabels, newLabelIDs ){
+        let finalLabels = [...newLabelIDs]
+
+        // search for labels not related to chatbot
+        for( let i = 0; i < chatLabels.length; i++){
+            const cLabel = chatLabels[i]
+            if( !cLabel.name.startsWith( this.labelPrefix ))
+                finalLabels.push(cLabel.id)
+        }
+        chat.changeLabels(finalLabels)
+    }
+
+
+    /*
+     * check if the contact number is in the test number list
+     * @param {Contact} contact
+     * @return {boolean} 
+     */
+    async isTestContact( contact ){
+        const formatedPhoneNumber  = await contact.getFormattedNumber()
+        const sanitizedPhoneNumber = formatedPhoneNumber.replace(/[^\d]+/gi,"")
+        return this.testPhoneNumbers.some( num=>(num === sanitizedPhoneNumber))
     }
 }
 
 
-// label functions
-async function getLabelByName( labelName ){
-    const labels = await client.getLabels()
-    return labels.find( label => label.name === labelName )
-}
-
-// change labels, taking care of keeping non-chatbot labels
-async function addLabel(chat, chatLabels, newLabelIDs ){
-    let finalLabels = newLabelIDs 
-
-    // search for labels not related to chatbot
-    for( let i = 0; i < chatLabels.length; i++){
-        const cLabel = chatLabels[i]
-        if( !cLabel.name.startsWith( labelPrefix ))
-            finalLabels.push(cLabel.id)
-    }
-    chat.changeLabels(finalLabels)
-}
-
-async function getChatBotLabels (){
-    return Promise.resolve({
-        intro:                await getLabelByName( labelPrefix + 'intro' ),
-        welderWorker:         await getLabelByName( labelPrefix + 'welder' ),
-        generalWorkerStrumet: await getLabelByName( labelPrefix + 'generalWorkerStrumet' ),
-        generalWorkerFAM:     await getLabelByName( labelPrefix + 'generalWorkerFAM' ),
-        euroConfortWorker:    await getLabelByName( labelPrefix + 'euroConfortWorker' ),
-        assistance:           await getLabelByName( labelPrefix + 'assistance' ),
-        partner:              await getLabelByName( labelPrefix + 'partner' ),
-        waitingLocation:      await getLabelByName( labelPrefix + 'waitingLocation' ),
-        inPoland:             await getLabelByName( labelPrefix + 'inPoland' ),
-        fromExterior:         await getLabelByName( labelPrefix + 'fromExterior' ),
-        notInterested:        await getLabelByName( labelPrefix + 'notInterested' ),
-    })
-}
 
 
-
-/*
- * check if the contact number is in the test number list
- * @param {Contact} contact
- * @return {boolean} 
- */
-async function isTestContact (contact){
-    const formatedPhoneNumber  = await contact.getFormattedNumber()
-    const sanitizedPhoneNumber = formatedPhoneNumber.replace(/[^\d]+/gi,"")
-    return testPhoneNumbers.some( num => (num === sanitizedPhoneNumber) )
-}
-
-
-/*
- * Read messages json file and and parse to assign to gobal variable
- * @param {string} messagesPath messages file path
- * @return void
- */
-function readMessagesFile( messagesPath ){
-    fs.readFile( messagesPath, { encoding: 'utf8' }, (error,messages)=>{
-        if(error) console.error(error)
-        try{
-            const messagesJSON = JSON.parse(messages)
-            chatBotMessages = messagesJSON
-        }catch( errorJson ){
-            // continue execution without stopping
-            console.error( errorJson )
-        }
-    })
-}
-
-
-/*
- * Watch messages json file for changes, and parse it after
- * @param {string} messagesPath messages file path
- * @return {void}
- */
-function watchMessagesFile( messagesPath ){
-    fs.watch( messagesPath, ( eventType, filename )=>{
-        if(eventType === 'change'){
-            console.log("FILE CHANGED" + filename)
-            readMessagesFile(messagesPath)
-        }
-    })
-}
+module.exports = ChatBot
