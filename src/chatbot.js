@@ -171,14 +171,13 @@ class ChatBot {
         //get more info
         const chatLabels    = await chat.getLabels()
         const contactNumber = await contact.getFormattedNumber();
-        const getLabel = this.getLabel
-
-
-        const labelPrx = this.labelPrefix
-        console.log("[%s]\tMESSAGE: %s\tNAME: %s",new Date().toString(), contactNumber, contact.pushname)
+        const getLabel      = this.getLabel
+        const labelPrx      = this.labelPrefix
 
         let messagesToSend = []
         let labelsToAssign = []
+        
+        console.log("[%s]\tMESSAGE: %s\tNAME: %s",new Date().toString(), contactNumber, contact.pushname)
 
         // avoid assistance marked chats to be passed to chatbot
         if ( chatLabels.some( l => l.id === getLabel('assistance').id)) return
