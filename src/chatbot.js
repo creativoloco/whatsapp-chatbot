@@ -18,10 +18,9 @@ class ChatBot {
         let clientLabels = await this.client.getLabels()
         let prefix = this.labelPrefix
         console.log('Labels readed')
-        return labelName => clientLabels.find( lb => 
-                lb.name === (prefix+labelName)
-            )
-        
+        return labelName => clientLabels.find( lb =>{
+            return lb.name === (prefix+labelName)
+        })
     }
 
     /**
@@ -62,7 +61,6 @@ class ChatBot {
         /*
          * Watch messages json file for changes, and parse it after
          * @param {string} messagesPath messages file path
-         * @return {void}
          */
         async function watchMessagesFile(){
             fs.watch( messagePath, ( eventType, filename )=>{
@@ -86,7 +84,7 @@ class ChatBot {
      */
     fileCache(){
         const messageMediaCache = []
-        return function(filename){
+        return filename => {
             // search for file
             for( let i = 0; i < messageMediaCache.length; i++){
                if( filename === messageMediaCache[i].fileName ){
@@ -114,9 +112,19 @@ class ChatBot {
         // function to get messages
         this.getMsgs = await this.messages()
 
-        // function to get labels (initialized when start method is called)
-        this.getLabel = await this.labels()
-
+        do {
+            // function to get labels (initialized when start method is called)
+            this.getLabel = await this.labels()
+        } while (!(this.getLabel("assistance") &&
+            this.getLabel("intro") &&
+            this.getLabel("welder") &&
+            this.getLabel("generalWorkerFAM") &&
+            this.getLabel("generalWorkerStrumet") &&
+            this.getLabel("euroConfortWorker") &&
+            this.getLabel("partner") &&
+            this.getLabel("inPoland") &&
+            this.getLabel("fromExterior") &&
+            this.getLabel("waitingLocation")))
     }
 
     async respondNewMessages(){
@@ -167,7 +175,7 @@ class ChatBot {
 
 
         const labelPrx = this.labelPrefix
-        console.log("MESSAGE FROM: %s NAMED: %s", contactNumber, contact.pushname)
+        console.log("[%s]\tMESSAGE: %s\tNAME: %s",new Date().toString(), contactNumber, contact.pushname)
 
         let messagesToSend = []
         let labelsToAssign = []
@@ -182,11 +190,12 @@ class ChatBot {
         }
 
         // shortcut for delete message (only testNumbers)
-        if( isTestable && message.body === '!delete') {
+        if( isTestContact && message.body === '!delete') {
             console.log("CHAT DELETED: "+(await chat.delete()))
             return
         }
         
+
 
         // step 1
         // check if this chat has been processed by chatbot
@@ -197,6 +206,12 @@ class ChatBot {
             // actions
             await this.sendMsgs( chat, messagesToSend )
             await this.addLabel(chat, chatLabels, labelsToAssign)
+            return
+        }
+
+        // bug error pupperet workaround 
+        if( !(message && message.body) ){
+            console.log('NO MESSAGE BODY')
             return
         }
 
@@ -342,7 +357,7 @@ class ChatBot {
                     messagesToSend.push(...this.getMsgs('intro'))
                     break
                 default:
-                    let prevMsgs = this.getMsgs('welder')
+                    let prevMsgs = this.getMsgs('welderWorker')
                     messagesToSend.push(this.getMsgs('wrongResponse'))
                     messagesToSend.push(prevMsgs[prevMsgs.length-1])
                     labelsToAssign.push(...chatLabels.map(l=>l.id))

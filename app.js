@@ -1,5 +1,5 @@
-const ChatBot = require('./src/ChatBot')
-
+const ChatBot = require('./src/chatbot')
+const {getChromeDefaultPath} = require('./src/getChromeDefaultPath')
 const { Client, LocalAuth } = require( 'whatsapp-web.js/index' )
 
 
@@ -7,7 +7,7 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: false,
-        executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+        executablePath: getChromeDefaultPath()
     }
 })
 
@@ -31,3 +31,4 @@ client.on('ready', async ()=>{
     await chatbot.respondUnreadChats()
     await chatbot.respondNewMessages()
 })
+
