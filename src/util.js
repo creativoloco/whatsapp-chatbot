@@ -2,7 +2,7 @@
 /*
  * https://stackoverflow.com/a/19700358
 */
-module.export.msToTime = function ( duration ) {
+module.exports.msToTime = function ( duration ) {
   let  ms = Math.floor( (duration % 1000) / 100),
       sec = Math.floor( (duration / 1000) % 60),
       min = Math.floor( (duration / (1000 * 60)) % 60),
