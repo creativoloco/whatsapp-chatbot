@@ -44,8 +44,8 @@ client.on('call', async (call) => {
         await call.reject();
 
         if( !call.isGroup ){
-            let msg = `Hola, en este momento no puedo contestar llamadas `
-            `en Polonia son las ${currentHour}:${currentMin}\n`
+            let msg = `Hola, en este momento no puedo contestar llamadas ` + 
+            `en Polonia son las ${currentHour}:${currentMin}\n` +
             `Por favor, sigue las opciones del chatbot, y dejame tu mensaje.`
 
             console.log(`Call received out of time, rejecting`);
