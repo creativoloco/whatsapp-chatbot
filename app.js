@@ -2,6 +2,7 @@ const ChatBot = require('./src/chatbot')
 const {getChromeDefaultPath} = require('./src/getChromeDefaultPath')
 const { Client, LocalAuth } = require( 'whatsapp-web.js/index' )
 
+let rejectCalls = true;
 
 const client = new Client({
     authStrategy: new LocalAuth(),
@@ -31,4 +32,25 @@ client.on('ready', async ()=>{
     await chatbot.respondUnreadChats()
     await chatbot.respondNewMessages()
 })
+
+client.on('call', async (call) => {
+    let currentDate = new Date()
+    let currentHour = currentDate.getHours()
+    let currentMin  = currentDate.getMinutes()
+    let isOutTime   = currentHour >= 21 || currentHour <= 6
+
+    // reject group calls, and calls after 21:00 and before 6:00
+    if( rejectCalls && call.isGroup || isOutTime){
+        await call.reject();
+
+        if( !call.isGroup ){
+            let msg = `Hola, en este momento no puedo contestar llamadas `
+            `en Polonia son las ${currentHour}:${currentMin}\n`
+            `Por favor, sigue las opciones del chatbot, y dejame tu mensaje.`
+
+            console.log(`Call received out of time, rejecting`);
+            await client.sendMessage(call.from,msg);
+        }
+    }
+});
 
