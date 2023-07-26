@@ -198,7 +198,7 @@ class ChatBot {
 
         // step 1
         // check if this chat has been processed by chatbot
-        if( !chatLabels.some( l => (l.name && l.name.startsWith(labelPrx)) ) ){
+        if( !chatLabels.some( l => l.name?.startsWith(labelPrx))  ){
             messagesToSend.push(...this.getMsgs('intro'))
             labelsToAssign.push( getLabel('intro').id )
             
@@ -270,7 +270,7 @@ class ChatBot {
             l.id === getLabel('fromExterior').id 
         )){
             let previousLabelsIDs  = chatLabels.filter( l =>{
-                return l.name.startsWith(labelPrx)
+                return l.name?.startsWith(labelPrx)
             }).map(l=>l.id)
             
             switch( message.body ){
@@ -304,7 +304,7 @@ class ChatBot {
             // this array does not contain "waitingLocation" label
             let previousLabelsIDs  = chatLabels.filter( l =>{
                 return (
-                    l.name.startsWith(labelPrx) &&
+                    l.name?.startsWith(labelPrx) &&
                     l.id != getLabel('waitingLocation').id 
                 )}).map(l=>l.id)
             switch( message.body ){
@@ -376,7 +376,7 @@ class ChatBot {
         // search for labels not related to chatbot
         for( let i = 0; i < chatLabels.length; i++){
             const cLabel = chatLabels[i]
-            if( !cLabel.name.startsWith( this.labelPrefix ))
+            if( !cLabel.name?.startsWith( this.labelPrefix ))
                 finalLabels.push(cLabel.id)
         }
         chat.changeLabels(finalLabels)
