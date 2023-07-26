@@ -198,7 +198,7 @@ class ChatBot {
 
         // step 1
         // check if this chat has been processed by chatbot
-        if( !chatLabels.some( l => l.name.startsWith(labelPrx)) ){
+        if( !chatLabels.some( l => (l.name && l.name.startsWith(labelPrx)) ) ){
             messagesToSend.push(...this.getMsgs('intro'))
             labelsToAssign.push( getLabel('intro').id )
             
