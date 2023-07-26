@@ -1,5 +1,6 @@
 const {fork} = require('child_process')
 const path = require('path')
+const { msToTime } = require("./util.js")
 
 const persistentProcess = path.join(__dirname, 'app.js')
 const maxNumTries = 10
@@ -22,8 +23,8 @@ function setEvents( child ){
     
     child.send('noError')
 
-    logGreen(`Setting events for new fork ${ ++countProcess}`)
-    logGreen(`Time elapsed from previous closed child: ${elapsedTime} ms`)
+    logGreen(`Setting events for child number ${ ++countProcess}`)
+    logGreen(`Uptime previous child: ${msToTime(elapsedTime)} ms`)
 
     child.on('message', message => {
         logGreen(`child event: MESSAGE -> (message ${message})`)
