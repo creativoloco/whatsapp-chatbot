@@ -1,6 +1,6 @@
 const {fork} = require('child_process')
 const path = require('path')
-const { msToTime } = require("./util.js")
+const { msToTime } = require("./src/util.js")
 
 const persistentProcess = path.join(__dirname, 'app.js')
 const maxNumTries = 10
