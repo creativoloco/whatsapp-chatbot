@@ -4,7 +4,7 @@
   "description": "whatsapp chatbot whitout using Whatsapp API provided by facebook",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "run": "node app.js"
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/creativoloco/whatsappChatbot#readme",
   "dependencies": {
+    "mongoose": "^7.4.3",
     "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js"
   }
 }

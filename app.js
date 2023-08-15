@@ -1,56 +1,63 @@
-const ChatBot = require('./src/chatbot')
-const {getChromeDefaultPath} = require('./src/getChromeDefaultPath')
-const { Client, LocalAuth } = require( 'whatsapp-web.js/index' )
+const {fork} = require('child_process')
+const path = require('path')
+const { msToTime } = require("./src/util.js")
 
-let rejectCalls = true;
+const persistentProcess = path.join(__dirname, 'app.js')
+const maxNumTries = 10
+const maxElapsedTime = 1000
 
-const client = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: {
-        headless: false,
-        executablePath: getChromeDefaultPath()
-    }
-})
+let countProcess        = 0
+let mainChild           = fork( persistentProcess )
+let dateLastChilStart   = new Date()
 
-const chatbot = new ChatBot({
-    production: false,
-    testNumbers: [ "573158770727", "48731356633" ]
-})
+setEvents(mainChild)
 
-client.initialize()
+function setEvents( child ){
+    const dateNewChild = new Date()
+    const elapsedTime  = dateNewChild - dateLastChilStart
+    const isConcurrent = (elapsedTime<maxElapsedTime && countProcess>maxNumTries )
 
-// auth events
-client.on('loading_screen', (p,m)=> console.log("LOADING SCREEN",p,m) )
-client.on('qr',               qr => console.log('QR RECEIVED',qr) )
-client.on('authenticated',    () => console.log('AUTHENTICATED') )
-client.on('auth_failure',      m => console.log('AUTH FAILURE', m) )
+    if( isConcurrent ) return
+    
+    dateLastChilStart = dateNewChild
+    
+    logGreen(`Setting events for child number ${ ++countProcess}`)
+    logGreen(`Uptime previous child: ${msToTime(elapsedTime)} ms`)
 
+    child.on('message', message => {
+        logGreen(`child event: MESSAGE -> (message ${message})`)
+    })
 
-// just need chatBot start
-client.on('ready', async ()=>{
-    await chatbot.start(client)
-    await chatbot.respondUnreadChats()
-    await chatbot.respondNewMessages()
-})
+    child.on('spawn', ()=> { logGreen(`child event: SPAWN`) })
 
-client.on('call', async (call) => {
-    let currentDate = new Date()
-    let currentHour = currentDate.getHours()
-    let currentMin  = currentDate.getMinutes()
-    let isOutTime   = currentHour >= 21 || currentHour <= 6
-
-    // reject group calls, and calls after 21:00 and before 6:00
-    if( rejectCalls && call.isGroup || isOutTime){
-        await call.reject();
-
-        if( !call.isGroup ){
-            let msg = `Hola, en este momento no puedo contestar llamadas ` + 
-            `en Polonia son las ${currentHour}:${currentMin}\n` +
-            `Por favor, sigue las opciones del chatbot, y dejame tu mensaje.`
-
-            console.log(`Call received out of time, rejecting`);
-            await client.sendMessage(call.from,msg);
+    child.on('close', (code, signal) => {
+        logGreen(`child event: CLOSE -> (code ${code}, signal ${signal})`)
+        
+        if( code === 1 ){
+            // an error ocurred 
+            logRed("Restarting application")
+            mainChild = fork( persistentProcess )
+            setEvents( mainChild )
         }
-    }
-});
+    })
 
+    child.on('error', error => {
+        logGreen(`child event: ERROR -> (error ${error})`)
+    })
+
+    child.on('exit', (code, signal) => {
+        logGreen(`child event: EXIT -> (code ${code}, signal ${signal})`)
+    })
+}
+
+function logGreen(message){
+    let color = "\x1b[32m"
+    let reset = "\x1b[0m"
+    console.info(color + message + reset)
+}
+
+function logRed(message){
+    let color = "\x1b[31m"
+    let reset = "\x1b[0m"
+    console.error(color + message + reset)
+}
