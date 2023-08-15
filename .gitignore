@@ -38,6 +38,7 @@ jspm_packages/
 
 # Lock files
 package-lock.json
+pnpm-lock.yaml
 yarn.lock
 
 # TypeScript v1 declaration files
