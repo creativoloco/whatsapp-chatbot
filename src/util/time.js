@@ -12,5 +12,5 @@ module.exports.msToTime = function ( duration ) {
     min = (min < 10) ? "0" + min : min;
     sec = (sec < 10) ? "0" + sec : sec;
 
-    return `${hrs}:${min}:${sec}.${ms}`
+    return `${hrs}:${min}:${sec}.${ms} ms`
 }

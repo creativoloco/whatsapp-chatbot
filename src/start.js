@@ -1,9 +1,10 @@
-const ChatBot = require('./src/chatbot')
-const {getChromeDefaultPath} = require('./src/getChromeDefaultPath')
+const {ChatBot} = require('./chatbot.js')
+const {getChromeDefaultPath} = require('./util/compatbility.js')
 const { Client, LocalAuth } = require( 'whatsapp-web.js/index' )
 
 const rejectCalls = true;
 
+// WA client config
 const whatsappClient = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
@@ -12,6 +13,7 @@ const whatsappClient = new Client({
     }
 })
 
+// chatbot config
 const chatbot = new ChatBot({
     production: false,
     testNumbers: [ "573158770727", "48731356633" ]

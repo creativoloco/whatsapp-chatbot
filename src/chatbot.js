@@ -397,5 +397,4 @@ class ChatBot {
 
 
 
-
-module.exports = ChatBot
+module.exports.ChatBot = ChatBot

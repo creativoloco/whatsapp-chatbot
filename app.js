@@ -1,63 +1,71 @@
+require('dotenv').config()
+
 const {fork} = require('child_process')
 const path = require('path')
-const { msToTime } = require("./src/util.js")
 
-const persistentProcess = path.join(__dirname, 'app.js')
-const maxNumTries = 10
-const maxElapsedTime = 1000
+const { msToTime } = require("./src/util/time.js")
+const { log } = require("./src/util/logger.js")
 
-let countProcess        = 0
-let mainChild           = fork( persistentProcess )
-let dateLastChilStart   = new Date()
+// constants
+const EXE_FILE = path.join(__dirname, 'src', 'start.js')
+const MIN_WORKING_TIME  = 1000
+const MAX_TRIES_NUM     = 5
 
-setEvents(mainChild)
+// child process initialization 
+let childRef, childDate
 
-function setEvents( child ){
-    const dateNewChild = new Date()
-    const elapsedTime  = dateNewChild - dateLastChilStart
-    const isConcurrent = (elapsedTime<maxElapsedTime && countProcess>maxNumTries )
+// time control
+// tries count during ideal working time and total tries count
+let triesCountPerWT=0, totalTriesCount=0
 
-    if( isConcurrent ) return
-    
-    dateLastChilStart = dateNewChild
-    
-    logGreen(`Setting events for child number ${ ++countProcess}`)
-    logGreen(`Uptime previous child: ${msToTime(elapsedTime)} ms`)
+// RECURSIVE !!!
+createChild()
 
-    child.on('message', message => {
-        logGreen(`child event: MESSAGE -> (message ${message})`)
+
+function createChild( ){
+    // time and tries check control 
+    const newChildDate = new Date()
+    const elapsedTime  = childRef ? newChildDate - childDate : 0
+    if( childRef && !triesCheckPassed(elapsedTime) ){
+        log.error(`Max tries reached: ${triesCountPerWT}`)
+        /* @todo notify by email */
+        // finish recursion chain
+        return
+    }
+
+    childRef  = fork( EXE_FILE )
+
+    // events setup
+    childRef.on('spawn', ()=> {
+        childDate = newChildDate
+        ++triesCountPerWT
+        ++totalTriesCount
+        log.ok( `child SPAWN count ${totalTriesCount}`)
+        log.warn( `Time elapsed previous child ${ msToTime(elapsedTime) }`)
     })
 
-    child.on('spawn', ()=> { logGreen(`child event: SPAWN`) })
-
-    child.on('close', (code, signal) => {
-        logGreen(`child event: CLOSE -> (code ${code}, signal ${signal})`)
+    childRef.on('close', (code, signal) => {
+        log.error(`child CLOSE code: ${code} - signal: ${signal}`)
         
         if( code === 1 ){
             // an error ocurred 
-            logRed("Restarting application")
-            mainChild = fork( persistentProcess )
-            setEvents( mainChild )
+            log.error("Restarting application")
+            createChild()
         }
     })
 
-    child.on('error', error => {
-        logGreen(`child event: ERROR -> (error ${error})`)
-    })
+    childRef.on('error', error => { log.error(`child ERROR\n${error})`) })
 
-    child.on('exit', (code, signal) => {
-        logGreen(`child event: EXIT -> (code ${code}, signal ${signal})`)
+    childRef.on('exit', (code, signal) => {
+        log.warn(`child event: EXIT -> (code ${code}, signal ${signal})`)
     })
 }
 
-function logGreen(message){
-    let color = "\x1b[32m"
-    let reset = "\x1b[0m"
-    console.info(color + message + reset)
-}
-
-function logRed(message){
-    let color = "\x1b[31m"
-    let reset = "\x1b[0m"
-    console.error(color + message + reset)
+// check if something is working unexpectly
+function triesCheckPassed( elapsedTime ){
+    const isMaxTriesOK = (triesCountPerWT < MAX_TRIES_NUM ) 
+    const isMinTimeOK  = (elapsedTime > MIN_WORKING_TIME)
+    // reset tries count per working time
+    if(isMinTimeOK) triesCountPerWT = 0
+    return  isMinTimeOK && isMaxTriesOK 
 }
